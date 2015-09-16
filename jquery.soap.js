@@ -90,13 +90,20 @@ https://github.com/doedje/jquery.soap/blob/1.6.7/README.md
 				}
 			}
 			// SOAPHeader
-			if (!!config.SOAPHeader) {
+			if (!!config.header.SOAPHeader) {
 				var soapHeader = SOAPTool.processData({
-					data: config.SOAPHeader,
+					data: config.header.SOAPHeader,
 					name: 'temp',
-					prefix: ''
+					prefix: (!!config.header.namespaceQualifier && !config.header.noPrefix) ? config.header.namespaceQualifier+':' : ''
 				});
 				if (!!soapHeader) {
+					if (!!config.header.namespaceQualifier && !!config.header.namespaceURL) {
+						soapHeader.addNamespace(config.header.namespaceQualifier, config.header.namespaceURL);
+					}
+					else if (!!config.namespaceURL) {
+						soapObject.attr('xmlns', config.namespaceURL);
+					}
+
 					if (soapHeader.hasChildren()) {
 						for (var j in soapHeader.children) {
 							soapEnvelope.addHeader(soapHeader.children[j]);
