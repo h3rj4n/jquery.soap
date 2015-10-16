@@ -44,7 +44,8 @@ https://github.com/doedje/jquery.soap/blob/1.6.7/README.md
 		async: true,
 		enableLogging: false,
 		noPrefix: false,
-		soap12: false
+		soap12: false,
+		sortAZ: false
 	};
 
 	$.soap = function(options) {
@@ -70,7 +71,8 @@ https://github.com/doedje/jquery.soap/blob/1.6.7/README.md
 			data: config.data,
 			name: (!!config.elementName) ? config.elementName : config.method,
 			context: config.context,
-			prefix: (!!config.namespaceQualifier && !config.noPrefix) ? config.namespaceQualifier+':' : ''
+			prefix: (!!config.namespaceQualifier && !config.noPrefix) ? config.namespaceQualifier+':' : '',
+			sortAZ: config.sortAZ
 		});
 
 		if (!!config.namespaceQualifier && !!config.namespaceURL) {
@@ -498,14 +500,14 @@ https://github.com/doedje/jquery.soap/blob/1.6.7/README.md
 				soapObject = SOAPTool.array2soap(options);
 			} else if ($.isPlainObject(options.data)) {
 				// if data is JSON, parse to SOAPObject
-				soapObject = SOAPTool.json2soap(options.name, options.data, options.prefix);
+				soapObject = SOAPTool.json2soap(options.name, options.data, options.prefix, options.sortAZ);
 			} else if ($.isFunction(options.data)) {
 				// if data is function, the function should return a SOAPObject
 				soapObject = options.data.call(options.context, SOAPObject);
 			}
 			return soapObject;
 		},
-		json2soap: function (name, params, prefix, parentNode) {
+		json2soap: function (name, params, prefix, sortAZ, parentNode) {
 			var soapObject;
 			var childObject;
 			if (params === null) {
@@ -515,7 +517,7 @@ https://github.com/doedje/jquery.soap/blob/1.6.7/README.md
 				// added by DT - check if object is in fact an Array and treat accordingly
 				if(params.constructor.toString().indexOf("Array") > -1) { // type is array
 					for(var i = 0; i < params.length; i++) {
-						childObject = this.json2soap(name, params[i], prefix, parentNode);
+						childObject = this.json2soap(name, params[i], prefix, sortAZ, parentNode);
 						parentNode.appendChild(childObject);
 					}
 				} else if (params.constructor.toString().indexOf("String") > -1) { // type is string
@@ -527,13 +529,20 @@ https://github.com/doedje/jquery.soap/blob/1.6.7/README.md
 					soapObject = new SOAPObject(prefix+name);
 					soapObject.val(params.toISOString());
 				} else {
+					var _this = this;
 					soapObject = new SOAPObject(prefix+name);
-					for(var y in params) {
-						childObject = this.json2soap(y, params[y], prefix, soapObject);
+					// Make sure the params are alphabetically. Get the keys and sort them.
+					var keys = Object.keys(params);
+					if (sortAZ === true) {
+						keys.sort();
+					}
+					// Change the data object into an array sorted by the key.
+					$.each(keys, function (key, value) {
+						childObject = _this.json2soap(value, params[value], prefix, sortAZ, soapObject);
 						if (childObject) {
 							soapObject.appendChild(childObject);
 						}
-					}
+					});
 				}
 			} else if (typeof params == 'boolean') {
 				soapObject = new SOAPObject(prefix+name);
