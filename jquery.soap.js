@@ -538,9 +538,28 @@ https://github.com/doedje/jquery.soap/blob/1.6.7/README.md
 					}
 					// Change the data object into an array sorted by the key.
 					$.each(keys, function (key, value) {
-						childObject = _this.json2soap(value, params[value], prefix, sortAZ, soapObject);
-						if (childObject) {
-							soapObject.appendChild(childObject);
+						if (value == 'materialdetail') {
+							var materialSoap = new SOAPObject(prefix+value);
+
+							// Loop trough the child values.
+							$.each(params[value], function (key, value) {
+								var soapChild = new SOAPObject('win:SOMaterial');
+								// Loop trough the child items.
+								$.each(value, function(childKey, childValue) {
+									childObject = _this.json2soap(childKey, childValue, 'win:', sortAZ, soapChild);
+									if (childObject) {
+										soapChild.appendChild(childObject);
+									}
+								});
+								materialSoap.appendChild(soapChild);
+							});
+							soapObject.appendChild(materialSoap);
+						}
+						else {
+							childObject = _this.json2soap(value, params[value], prefix, sortAZ, soapObject);
+							if (childObject) {
+								soapObject.appendChild(childObject);
+							}
 						}
 					});
 				}
